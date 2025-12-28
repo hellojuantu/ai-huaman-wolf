@@ -303,8 +303,7 @@ export class GameManager {
           this.broadcastRoomState(game);
 
           // 如果游戏正在进行，尝试恢复游戏循环
-          if (game.state === 'playing' && !game.isLoopRunning) {
-            game.isLoopRunning = true;
+          if (game.state === 'playing') {
             game.resumeGameLoop().finally(() => {
               game.isLoopRunning = false;
             });
@@ -524,7 +523,7 @@ export class GameManager {
     }
 
     // 寻找最近添加的一个 AI 玩家并移除
-    const aiPlayers = Array.from(game.players.values()).filter(p => p.isAI);
+    const aiPlayers = Array.from(game.players.values()).filter((p) => p.isAI);
     if (aiPlayers.length > 0) {
       const lastAI = aiPlayers[aiPlayers.length - 1];
       game.removePlayer(lastAI.id);
@@ -647,13 +646,17 @@ export class GameManager {
       currentPhase: game.currentPhase,
       dayNumber: game.dayNumber,
       myRole: playerInGame?.role?.name || null,
+      myRoleDescription: playerInGame?.role?.description || null,
       messages: game.messages || [],
       wolfChatHistory: playerInGame?.role?.name === '狼人' ? game.wolfChatHistory || [] : [],
       speakingOrder: game.speakingOrder || [],
       currentSpeakerId: game.currentSpeakerId || null,
+      currentSpeakerIndex: game.currentSpeakerIndex || 0,
       isPaused: game.isPaused || false,
       countdown: game.currentCountdown || 0,
-      myIsAlive: playerInGame ? playerInGame.isAlive : true
+      myIsAlive: playerInGame ? playerInGame.isAlive : true,
+      hasVoted: game.votes && game.votes[userId] !== undefined,
+      hasActed: game.nightActions && game.nightActions[userId] !== undefined
     };
 
     // 如果在夜晚且玩家存活且未行动，发送动作选项
@@ -794,6 +797,11 @@ export class GameManager {
       // 房主退出，解散房间
       if (userId === game.hostId) {
         console.log(`房主 ${userId} 退出，解散房间 ${player.roomId}`);
+
+        // 标记游戏结束，停止所有异步循环
+        game.state = 'ended';
+        game.loopSessionId++; // 使所有运行中的循环失效
+
         this.broadcast(game, {
           type: 'room_closed',
           data: { reason: '房主已解散房间' }

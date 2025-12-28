@@ -61,7 +61,7 @@ export class Hunter extends Role {
 
       const { reverseIdMap, idMap } = this.game.getGameStateForAI(this.playerId);
 
-      const maskedTargets = targets.map(t => ({
+      const maskedTargets = targets.map((t) => ({
         id: reverseIdMap[t.id] || t.id,
         name: t.name
       }));

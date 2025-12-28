@@ -44,18 +44,27 @@ export class LLMPlayer {
   // 构建夜晚行动提示
   buildNightPrompt(roleName, gameState) {
     const isNightOne = gameState.dayNumber === 1;
-    const nightOneHint = isNightOne ? '\n⚠️ 绝对禁令：现在是第一夜，游戏刚刚开始。没有任何人发过言，你没有任何关于其他人的信息（除狼人队友外）。严禁在理由中编造任何关于"白天发言"、"状态"、"带节奏"、"昨晚投票"的内容，因为这些事情尚未发生。请直接凭直觉或常规策略选择目标。' : '';
+    const nightOneHint = isNightOne
+      ? '\n⚠️ 绝对禁令：现在是第一夜，游戏刚刚开始。没有任何人发过言，你没有任何关于其他人的信息（除狼人队友外）。严禁在理由中编造任何关于"白天发言"、"状态"、"带节奏"、"昨晚投票"的内容，因为这些事情尚未发生。请直接凭直觉或常规策略选择目标。'
+      : '';
 
     const rolePrompts = {
       wolf: `你是狼人，今晚需要选择一个目标杀死。
 你的狼人同伴是: ${gameState.myTeammates?.map((t) => t.name).join(', ') || '无'}
 存活的玩家有: ${gameState.alivePlayers
-          .filter((p) => !p.isMe)
-          .map((p) => `${p.name}(ID:${p.id})`)
-          .join(', ')}
+        .filter((p) => !p.isMe)
+        .map((p) => `${p.name}(ID:${p.id})`)
+        .join(', ')}
 ${nightOneHint}
-${gameState.messages?.length > 0 ? `最近的消息记录 (可能包含狼人频道的讨论结果):
-${gameState.messages.slice(-5).map(m => `[${m.from}]: ${m.content}`).join('\n')}` : ''}
+${
+  gameState.messages?.length > 0
+    ? `最近的消息记录 (可能包含狼人频道的讨论结果):
+${gameState.messages
+  .slice(-5)
+  .map((m) => `[${m.from}]: ${m.content}`)
+  .join('\n')}`
+    : ''
+}
 
 请选择一个玩家作为击杀目标。注意：如果你已经在狼人频道跟同伴达成了一致，请务必遵守约定。
 
@@ -64,9 +73,9 @@ ${gameState.messages.slice(-5).map(m => `[${m.from}]: ${m.content}`).join('\n')}
 
       seer: `你是预言家，今晚可以查验一名玩家的身份。
 存活的玩家有: ${gameState.alivePlayers
-          .filter((p) => !p.isMe)
-          .map((p) => `${p.name}(ID:${p.id})`)
-          .join(', ')}
+        .filter((p) => !p.isMe)
+        .map((p) => `${p.name}(ID:${p.id})`)
+        .join(', ')}
 ${nightOneHint}
 
 请选择一个想要查验的玩家。返回 JSON 格式：
@@ -76,9 +85,9 @@ ${nightOneHint}
 ${gameState.roleState?.hasAntidote ? (gameState.deadTonight ? `今晚有一名玩家被狼人杀死了，但你不知道他是谁。` : '今晚没有人被狼人杀死。') : '你已经使用过解药了。'}
 ${gameState.roleState?.hasPoison ? '你还拥有一瓶毒药。' : '你已经使用过毒药了。'}
 存活的玩家有: ${gameState.alivePlayers
-          .filter((p) => !p.isMe)
-          .map((p) => `${p.name}(ID:${p.id})`)
-          .join(', ')}
+        .filter((p) => !p.isMe)
+        .map((p) => `${p.name}(ID:${p.id})`)
+        .join(', ')}
 ${nightOneHint}
 
 你可以选择：
@@ -104,9 +113,9 @@ ${rolePrompts[roleName] || ''}
 
 最近的游戏消息：
 ${gameState.messages
-        .slice(-10)
-        .map((m) => `[${m.from}]: ${m.content}`)
-        .join('\n')}
+  .slice(-10)
+  .map((m) => `[${m.from}]: ${m.content}`)
+  .join('\n')}
 
 请根据游戏情况做出决策，必须返回有效的 JSON 格式。`;
   }
@@ -126,9 +135,9 @@ ${roleHint}
 
 最近的发言记录：
 ${gameState.messages
-        .slice(-15)
-        .map((m) => `[${m.from}]: ${m.content}`)
-        .join('\n')}
+  .slice(-15)
+  .map((m) => `[${m.from}]: ${m.content}`)
+  .join('\n')}
 
 请分析各玩家的发言，选择一个你认为最可疑的玩家投票放逐。
 请务必确保 "target" 字段使用的是列表中精确的 ID（如 "p1", "p2" 等），不要仅凭名字猜测。
@@ -155,7 +164,7 @@ ${gameState.messages
         : `你是${gameState.myRole}（好人阵营），需要找出狼人并投票放逐他们。`;
 
     // 发言顺序展示
-    const currentPos = gameState.speakingOrder?.findIndex(p => p.isMe) + 1 || 0;
+    const currentPos = gameState.speakingOrder?.findIndex((p) => p.isMe) + 1 || 0;
     const orderSequence = gameState.speakingOrder?.map((p, i) => `${i + 1}. ${p.name}${p.isMe ? '(你自己)' : ''}`).join(' -> ') || '未知';
 
     return `【狼人杀游戏 - 第 ${gameState.dayNumber || 1} 天白天讨论】
@@ -173,11 +182,12 @@ ${gameState.messages
 - ${gameState.alivePlayers.map((p) => p.name).join(', ')}
 
 【发言记录】
-${gameState.messages
-        .slice(-15)
-        .map((m) => `[${m.from}]: ${m.content}`)
-        .join('\n') || '(暂无发言)'
-      }
+${
+  gameState.messages
+    .slice(-15)
+    .map((m) => `[${m.from}]: ${m.content}`)
+    .join('\n') || '(暂无发言)'
+}
 
 【发言要求】
 1. 发言是按顺序进行的，你是第 ${currentPos} 位。请仔细分析前面几位玩家的发言内容，并进行有针对性的回应。
@@ -222,9 +232,9 @@ ${gameState.messages
 - ${gameState.dayNumber === 1 ? '这是第一夜，没有任何信息。不要编造理由（如"白天他跳得欢"等），请随机选择一个幸运儿或者凭直觉杀人。注意：严禁提到"白天"的任何事情，因为还没有天亮过。' : '建议：提出击杀目标，或者回应同伴的提议。分析白天的情况，找出对狼人威胁最大的好人（如预言家、女巫）。'}
 【存活好人名单】
 ${gameState.alivePlayers
-        .filter((p) => p.role !== '狼人') // 简单过滤，实际 gameState.alivePlayers 可能包含 role 字段
-        .map((p) => `- ${p.name}`)
-        .join('\n')}
+  .filter((p) => p.role !== '狼人') // 简单过滤，实际 gameState.alivePlayers 可能包含 role 字段
+  .map((p) => `- ${p.name}`)
+  .join('\n')}
 
 【交流记录】
 ${chatHistory}

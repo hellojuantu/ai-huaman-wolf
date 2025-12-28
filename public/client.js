@@ -16,6 +16,15 @@ class WerewolfClient {
     this.bindElements();
     this.bindEvents();
     this.connect();
+
+    // 游戏中刷新时提示确认
+    window.addEventListener('beforeunload', (e) => {
+      if (this.currentRoom && this.myRole) {
+        e.preventDefault();
+        e.returnValue = '游戏正在进行中，确定要刷新页面吗？';
+        return e.returnValue;
+      }
+    });
   }
 
   bindElements() {
@@ -132,10 +141,16 @@ class WerewolfClient {
   // WebSocket 连接
   connect() {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    // 显示连接中状态
+    this.showConnectionStatus('connecting');
+
     this.ws = new WebSocket(`${protocol}://${window.location.host}`);
 
     this.ws.onopen = () => {
       console.log('WebSocket 连接成功');
+      this.showConnectionStatus('connected');
+
       // 尝试恢复会话
       const savedName = localStorage.getItem('playerName');
 
@@ -155,13 +170,46 @@ class WerewolfClient {
 
     this.ws.onclose = () => {
       console.log('WebSocket 连接关闭');
+      this.showConnectionStatus('disconnected');
       this.showToast('连接断开，正在重连...', 'error');
       setTimeout(() => this.connect(), 3000);
     };
 
     this.ws.onerror = (error) => {
       console.error('WebSocket 错误:', error);
+      this.showConnectionStatus('error');
     };
+  }
+
+  // 显示连接状态
+  showConnectionStatus(status) {
+    let overlay = document.getElementById('connectionOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'connectionOverlay';
+      overlay.innerHTML = `
+        <div class="connection-content">
+          <div class="connection-spinner"></div>
+          <div class="connection-text">连接中...</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    const text = overlay.querySelector('.connection-text');
+
+    if (status === 'connecting') {
+      overlay.style.display = 'flex';
+      text.textContent = '连接中...';
+    } else if (status === 'connected') {
+      overlay.style.display = 'none';
+    } else if (status === 'disconnected') {
+      overlay.style.display = 'flex';
+      text.textContent = '连接断开，重连中...';
+    } else if (status === 'error') {
+      overlay.style.display = 'flex';
+      text.textContent = '连接失败，重试中...';
+    }
   }
 
   // 获取或创建用户 ID
@@ -380,7 +428,7 @@ class WerewolfClient {
         startGameBtn.title = isValid ? '开始游戏' : `人数不足或不支持（当前 ${playerCount} 人，支持 6, 8, 9, 10, 12 人）`;
       }
 
-      const aiPlayers = players.filter(p => p.isAI);
+      const aiPlayers = players.filter((p) => p.isAI);
 
       if (addAIBtn) {
         addAIBtn.disabled = playerCount >= 12;
@@ -705,7 +753,7 @@ class WerewolfClient {
     const { playerId, playerName, isHuman, timeout } = data;
 
     // 清除之前所有发言高亮
-    document.querySelectorAll('.player-card').forEach(card => card.classList.remove('speaking'));
+    document.querySelectorAll('.player-card').forEach((card) => card.classList.remove('speaking'));
 
     // 高亮当前发言者卡片
     const currentCard = document.querySelector(`[data-player-id="${playerId}"]`);
@@ -970,6 +1018,22 @@ class WerewolfClient {
     if (data.myRole) {
       this.myRole = data.myRole;
       this.myRoleDisplay.textContent = `你是 ${data.myRole}`;
+
+      // 如果有角色描述，在聊天窗口添加欢迎消息（如果还没有）
+      if (data.myRoleDescription && data.state === 'playing') {
+        const welcomeMsg = `游戏开始！你的角色是 ${data.myRole}。${data.myRoleDescription}`;
+        // 检查是否已经有这条消息，避免重复
+        const existingMsgs = this.messages.querySelectorAll('.system-message');
+        let alreadyShown = false;
+        existingMsgs.forEach((msg) => {
+          if (msg.textContent.includes('游戏开始！你的角色是')) {
+            alreadyShown = true;
+          }
+        });
+        if (!alreadyShown) {
+          this.addSystemMessage(welcomeMsg);
+        }
+      }
     }
 
     // 恢复阶段显示
@@ -1000,15 +1064,15 @@ class WerewolfClient {
     // 保存自己的存活状态
     this.myIsAlive = data.myIsAlive !== false;
 
-    // 恢复动作面板 (只有存活玩家才能看到)
-    if (data.actionRequired && this.myIsAlive) {
+    // 恢复动作面板 (只有存活玩家且未行动才能看到)
+    if (data.actionRequired && this.myIsAlive && !data.hasActed) {
       this.onActionRequired(data.actionRequired);
     } else {
       this.actionPanel.style.display = 'none';
     }
 
-    // 恢复投票面板 (只有存活玩家才能看到)
-    if (data.currentPhase === 'vote' && data.candidates && this.myIsAlive) {
+    // 恢复投票面板 (只有存活玩家且未投票才能看到)
+    if (data.currentPhase === 'vote' && data.candidates && this.myIsAlive && !data.hasVoted) {
       this.showVotePanel(data.candidates);
     } else {
       this.votePanel.style.display = 'none';
@@ -1039,7 +1103,7 @@ class WerewolfClient {
 
       // 如果是狼人，加入狼人历史
       if (this.myRole === '狼人' && data.wolfChatHistory) {
-        data.wolfChatHistory.forEach(wm => {
+        data.wolfChatHistory.forEach((wm) => {
           // 标记为狼人消息
           allMessages.push({ ...wm, isWolf: true });
         });
