@@ -887,28 +887,43 @@ class WerewolfClient {
   }
 
   addMessage(from, content, type = '') {
+    const isAtBottom = this.messages.scrollHeight - this.messages.scrollTop <= this.messages.clientHeight + 50;
+
     const div = document.createElement('div');
     div.className = `message ${type}`;
     div.innerHTML = `<div class="sender">${from}</div><div class="content">${content}</div>`;
     this.messages.appendChild(div);
-    this.messages.scrollTop = this.messages.scrollHeight;
+
+    if (isAtBottom) {
+      this.messages.scrollTop = this.messages.scrollHeight;
+    }
   }
 
   addSystemMessage(content) {
+    const isAtBottom = this.messages.scrollHeight - this.messages.scrollTop <= this.messages.clientHeight + 50;
+
     const div = document.createElement('div');
     div.className = 'message system';
     div.innerHTML = `<div class="content">${content}</div>`;
     this.messages.appendChild(div);
-    this.messages.scrollTop = this.messages.scrollHeight;
+
+    if (isAtBottom) {
+      this.messages.scrollTop = this.messages.scrollHeight;
+    }
   }
 
   // 添加主持人消息
   addHostMessage(content) {
+    const isAtBottom = this.messages.scrollHeight - this.messages.scrollTop <= this.messages.clientHeight + 50;
+
     const div = document.createElement('div');
     div.className = 'message host';
     div.innerHTML = `<div class="content">${content}</div>`;
     this.messages.appendChild(div);
-    this.messages.scrollTop = this.messages.scrollHeight;
+
+    if (isAtBottom) {
+      this.messages.scrollTop = this.messages.scrollHeight;
+    }
   }
 
   // 猎人

@@ -253,7 +253,8 @@ export class Game {
       if (roleName === 'wolf' && checkSession()) {
         this.deadTonight = this.calculateWolfKill();
         const deadPlayer = this.deadTonight ? this.players.get(this.deadTonight) : null;
-        console.log(`[Game] 狼人回合结束，今晚死者: ${deadPlayer ? deadPlayer.name : '无'}`);
+        const deadInfo = deadPlayer ? `${deadPlayer.name} (${deadPlayer.role?.name || '未知'})` : '无';
+        console.log(`[Game] 狼人回合结束，今晚死者: ${deadInfo}`);
       }
     }
 
@@ -392,17 +393,21 @@ export class Game {
       this.nightActions[playerId] = { action, target };
 
       // 处理特定技能
-      if (player.role && typeof player.role.onAction === 'function') {
-        const targetPlayer = target ? this.players.get(target) : null;
-        const targetInfo = targetPlayer ? `${targetPlayer.name} (${targetPlayer.role?.name || '未知'})` : target || '无';
+      if (player.role) {
+        const action = player.role.actionType;
+        const targets = data.target; // Use data.target directly as it might be an object for some roles
+        const targetPlayer = targets ? this.players.get(targets) : null; // Assuming targets is a single ID for now
+        const targetInfo = targetPlayer ? `${targetPlayer.name} (${targetPlayer.role?.name || '未知'})` : JSON.stringify(targets);
         const reasonStr = data.reason ? ` | 原因: ${data.reason}` : '';
-        console.log(`[Game] 处理 ${player.name} (${player.role.constructor.roleName}) 的行动: ${action} ${targetInfo}${reasonStr}`);
+        console.log(`[Game] 处理 ${player.name} (${player.role.name}) 的行动: ${action} ${targetInfo}${reasonStr}`);
 
-        const result = player.role.onAction(action, target);
+        const result = player.role.onAction(action, targets); // Pass targets directly to onAction
         console.log(`[Game] Action result:`, result);
 
-        if (result && !player.isAI) {
-          console.log(`[Game] Sending action result to ${player.name}`);
+        if (player.isAI) {
+          // console.log(`[AI] ${player.name} action completed`);
+        } else {
+          console.log(`[Game] Sending action result to ${player.name} (${player.role?.name || '未知'})`);
           this.manager.sendToPlayer(playerId, {
             type: 'action_result',
             data: result
@@ -474,7 +479,7 @@ export class Game {
                   if (isDuplicate) continue;
 
                   // 发送给所有狼人 (Human & AI)
-                  console.log(`[Wolf Chat] ${player.name}: ${trimmedMsg}`);
+                  console.log(`[Wolf Chat] ${player.name} (${player.role?.name || '未知'}): ${trimmedMsg}`);
                   this.handleChat(playerId, trimmedMsg, true);
 
                   // 消息之间的小间隙
@@ -589,7 +594,9 @@ export class Game {
           saved = true;
           killed = null;
         } else {
-          console.log(`[Game] 女巫 ${witch.name} 尝试在第 ${this.dayNumber} 晚自救被拦截`);
+          // This is the original else block for self-save attempt
+          this.addMessage('system', `女巫 ${witch.name} 在第 ${this.dayNumber} 晚尝试自救被规则拦截（仅限首晚自救）`);
+          console.log(`[Game] 女巫 ${witch.name} (女巫) 尝试在第 ${this.dayNumber} 晚自救被拦截`);
         }
       } else if (action === 'poison' && target && witch.role.hasPoison) {
         witch.role.hasPoison = false;
@@ -625,7 +632,8 @@ export class Game {
     if (!player) return;
 
     player.isAlive = false;
-    console.log(`[Game] Player ${player.name} (${player.role.constructor.roleName}) was killed by ${cause}. isAlive set to false.`);
+
+    console.log(`[Game] Player ${player.name} (${player.role?.name || '未知'}) was killed by ${cause}. isAlive set to false.`);
 
     // 触发死亡技能
     if (player.role && typeof player.role.onDeath === 'function') {
@@ -912,11 +920,11 @@ export class Game {
         votePromises.push(
           (async () => {
             try {
-              console.log(`[Game] requesting vote from AI ${player.name}...`);
+              console.log(`[Game] requesting vote from AI ${player.name} (${player.role?.name || '未知'})...`);
               const { gameState, idMap } = this.getGameStateForAI(playerId);
               const decision = await player.llmPlayer.vote(gameState);
 
-              console.log(`[Game] AI ${player.name} vote decision:`, decision);
+              console.log(`[Game] AI ${player.name} (${player.role?.name || '未知'}) vote decision:`, decision);
 
               if (decision && decision.target) {
                 let targetId = decision.target;
@@ -965,8 +973,10 @@ export class Game {
       console.log(`[Game] Vote Result: Tie or no votes. No one eliminated.`);
     } else if (eliminated) {
       const victim = this.players.get(eliminated);
-      const victimInfo = victim ? `${victim.name} (${victim.role?.name})` : eliminated;
-      console.log(`[Game] Vote Result: ${victimInfo} received ${maxVotes} votes and was eliminated.`);
+      if (victim) {
+        const victimInfo = `${victim.name} (${victim.role?.name || '未知'})`;
+        console.log(`[Game] Vote Result: ${victimInfo} received ${maxVotes} votes and was eliminated.`);
+      }
     }
   }
 
@@ -1338,7 +1348,9 @@ export class Game {
     // 防止重复运行（但允许取代旧的循环）
     if (this.state !== 'playing' || this.isPaused) return;
 
-    console.log(`[Resume] 恢复游戏循环，阶段: ${this.currentPhase}, 当前发言者: ${this.currentSpeakerId}, session: ${mySessionId}`);
+    const speaker = this.players.get(this.currentSpeakerId);
+    const speakerInfo = speaker ? `${speaker.name} (${speaker.role?.name || '未知'})` : this.currentSpeakerId;
+    console.log(`[Resume] 恢复游戏循环，阶段: ${this.currentPhase}, 当前发言者: ${speakerInfo}, session: ${mySessionId}`);
 
     // 如果在白天发言阶段且有当前发言者
     if (this.currentPhase === 'day' && this.currentSpeakerId && this.speakingOrder) {
@@ -1404,11 +1416,13 @@ export class Game {
         }
       });
 
-      console.log(`[Speaking] 轮到 ${player.name}, isAI: ${player.isAI}, hasLLM: ${!!player.llmPlayer}, isAlive: ${player.isAlive}`);
+      console.log(
+        `[Speaking] 轮到 ${player.name} (${player.role?.name || '未知'}), isAI: ${player.isAI}, hasLLM: ${!!player.llmPlayer}, isAlive: ${player.isAlive}`
+      );
 
       if (player.isAI && player.llmPlayer && player.isAlive) {
         try {
-          console.log(`[Speaking] AI ${player.name} 开始发言...`);
+          console.log(`[Speaking] AI ${player.name} (${player.role?.name || '未知'}) 开始发言...`);
           await this.sleep(800);
           if (!checkSession()) return;
 
