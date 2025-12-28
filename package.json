@@ -1,0 +1,21 @@
+{
+  "name": "my-wolf",
+  "version": "1.0.0",
+  "description": "狼人杀多人在线游戏",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.4"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "server": {
+    "port": 3000
+  },
+  "llm": {
+    "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "qwen-plus",
+    "apiKey": "sk-230651ce28e74de2a4ed96a5edf7a31f"
+  },
+  "game": {
+    "discussionTime": 120,
+    "voteTime": 30,
+    "roleConfigs": {
+      "6": {
+        "wolf": 1,
+        "seer": 1,
+        "witch": 1,
+        "villager": 3
+      },
+      "8": {
+        "wolf": 2,
+        "seer": 1,
+        "witch": 1,
+        "hunter": 1,
+        "villager": 3
+      },
+      "9": {
+        "wolf": 2,
+        "seer": 1,
+        "witch": 1,
+        "hunter": 1,
+        "guard": 1,
+        "villager": 3
+      },
+      "10": {
+        "wolf": 2,
+        "seer": 1,
+        "witch": 1,
+        "hunter": 1,
+        "guard": 1,
+        "idiot": 1,
+        "villager": 3
+      },
+      "12": {
+        "wolf": 3,
+        "seer": 1,
+        "witch": 1,
+        "hunter": 1,
+        "guard": 1,
+        "idiot": 1,
+        "villager": 4
+      }
+    }
+  }
+}
