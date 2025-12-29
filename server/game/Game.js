@@ -394,14 +394,12 @@ export class Game {
 
       // 处理特定技能
       if (player.role) {
-        const action = player.role.actionType;
-        const targets = data.target; // Use data.target directly as it might be an object for some roles
-        const targetPlayer = targets ? this.players.get(targets) : null; // Assuming targets is a single ID for now
-        const targetInfo = targetPlayer ? `${targetPlayer.name} (${targetPlayer.role?.name || '未知'})` : JSON.stringify(targets);
+        const targetPlayer = target && typeof target === 'string' ? this.players.get(target) : null;
+        const targetInfo = targetPlayer ? `${targetPlayer.name} (${targetPlayer.role?.name || '未知'})` : JSON.stringify(target);
         const reasonStr = data.reason ? ` | 原因: ${data.reason}` : '';
         console.log(`[Game] 处理 ${player.name} (${player.role.name}) 的行动: ${action} ${targetInfo}${reasonStr}`);
 
-        const result = player.role.onAction(action, targets); // Pass targets directly to onAction
+        const result = player.role.onAction(action, target);
         console.log(`[Game] Action result:`, result);
 
         if (player.isAI) {
@@ -1251,6 +1249,13 @@ export class Game {
         roleState: player.role?.toJSON ? player.role.toJSON() : {},
         deadTonight: this.deadTonight ? reverseIdMap[this.deadTonight] : null,
         lastGuarded: this.lastGuarded ? reverseIdMap[this.lastGuarded] : null,
+        allPlayers: Array.from(this.players.entries()).map(([id, p]) => ({
+          id: reverseIdMap[id],
+          name: p.name,
+          isAlive: p.isAlive,
+          isMe: id === playerId,
+          role: isWolf && p.role?.name === '狼人' ? '狼人' : '未知'
+        })),
         alivePlayers: this.getAlivePlayers().map(([id, p]) => ({
           id: reverseIdMap[id],
           name: p.name,

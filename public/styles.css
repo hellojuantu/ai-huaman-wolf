@@ -667,52 +667,125 @@ input[type='text']::placeholder {
   padding-right: 4px;
 }
 
-/* 优化女巫特定布局 */
+/* 优雅的滚动条样式 */
+.action-targets::-webkit-scrollbar,
+.vote-candidates::-webkit-scrollbar {
+  width: 6px;
+}
+
+.action-targets::-webkit-scrollbar-track,
+.vote-candidates::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.action-targets::-webkit-scrollbar-thumb,
+.vote-candidates::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* 优化女巫特定布局 - 顶级质感 */
 .witch-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 
 .witch-section {
-  background: var(--bg-secondary);
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .witch-section h4 {
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: var(--accent-primary);
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.9;
 }
 
 .witch-section p {
-  margin-bottom: 8px;
-  font-size: 14px;
-  background: rgba(239, 68, 68, 0.1);
-  padding: 6px 10px;
-  border-radius: 6px;
-  border-left: 3px solid var(--accent-danger);
+  margin-bottom: 12px;
+  font-size: 15px;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), transparent);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent-danger);
+  color: #fca5a5;
+  font-weight: 500;
 }
 
 .witch-targets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.witch-targets-grid .poison-btn {
+  padding: 8px 4px;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.witch-targets-grid .poison-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+  transform: translateY(-1px);
+}
+
+.witch-targets-grid .poison-btn.selected {
+  background: var(--accent-danger);
+  border-color: var(--accent-danger);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .witch-section .save-btn {
   width: 100%;
-  padding: 10px;
-  background: linear-gradient(to right, #22c55e, #16a34a);
+  padding: 14px;
+  background: linear-gradient(135deg, #10b981, #059669);
   border: none;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.witch-section .save-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.witch-section .save-btn:active {
+  transform: translateY(1px);
+}
+
+.witch-section .save-btn.selected {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
 .action-targets .target-btn,

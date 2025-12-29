@@ -133,6 +133,15 @@ ${roleHint}
 
 存活的玩家有: ${gameState.alivePlayers.map((p) => `${p.name}(ID:${p.id})${p.isMe ? '(你自己)' : ''}`).join(', ')}
 
+已死亡/出局: ${
+      gameState.allPlayers
+        ? gameState.allPlayers
+            .filter((p) => !p.isAlive)
+            .map((p) => p.name)
+            .join(', ') || '无'
+        : '（暂无数据）'
+    } (他们已出局，不可作为投票目标)
+
 最近的发言记录：
 ${gameState.messages
   .slice(-15)
@@ -178,8 +187,16 @@ ${gameState.messages
 - 完整顺序：${orderSequence}
 - 你当前处于：第 ${currentPos} 位发言
 
-【场上存活玩家】
-- ${gameState.alivePlayers.map((p) => p.name).join(', ')}
+【场上玩家状态】
+- 存活: ${gameState.alivePlayers.map((p) => p.name).join(', ')}
+- 死亡/出局: ${
+      gameState.allPlayers
+        ? gameState.allPlayers
+            .filter((p) => !p.isAlive)
+            .map((p) => p.name)
+            .join(', ') || '无'
+        : '（暂无数据）'
+    }
 
 【发言记录】
 ${
@@ -235,6 +252,16 @@ ${gameState.alivePlayers
   .filter((p) => p.role !== '狼人') // 简单过滤，实际 gameState.alivePlayers 可能包含 role 字段
   .map((p) => `- ${p.name}`)
   .join('\n')}
+
+【已死亡/出局】
+${
+  gameState.allPlayers
+    ? gameState.allPlayers
+        .filter((p) => !p.isAlive)
+        .map((p) => `- ${p.name}`)
+        .join('\n') || '(无)'
+    : '(暂无数据)'
+}
 
 【交流记录】
 ${chatHistory}

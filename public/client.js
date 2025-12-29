@@ -597,8 +597,8 @@ class WerewolfClient {
       saveSection.innerHTML = `<h4>💊 解药</h4><p>昨晚死亡：<strong>${saveTarget.name}</strong></p>`;
 
       const btn = document.createElement('button');
-      btn.className = 'target-btn save-btn';
-      btn.textContent = '救活'; // 简化文本
+      btn.className = 'save-btn witch-btn';
+      btn.innerHTML = `<span>✨ 使用解药</span>`;
       btn.onclick = () => {
         this.selectWitchAction(btn, { id: saveTarget.id, action: 'save' });
       };
@@ -618,8 +618,8 @@ class WerewolfClient {
 
       poisonTargets.forEach((target) => {
         const btn = document.createElement('button');
-        btn.className = 'target-btn poison-btn';
-        btn.textContent = target.name; // 只显示名字
+        btn.className = 'poison-btn witch-btn';
+        btn.textContent = target.name;
         btn.onclick = () => {
           this.selectWitchAction(btn, { id: target.id, action: 'poison' });
         };
@@ -629,12 +629,14 @@ class WerewolfClient {
       container.appendChild(poisonSection);
     }
 
+    // 放弃按钮（可选，或者就在主界面）
+
     this.actionTargets.appendChild(container);
   }
 
   selectWitchAction(btn, target) {
-    // 清除所有选中状态
-    this.actionTargets.querySelectorAll('.target-btn').forEach((b) => b.classList.remove('selected'));
+    // 清除所有 witch-btn 的选中状态
+    this.actionTargets.querySelectorAll('.witch-btn').forEach((b) => b.classList.remove('selected'));
     // 选中当前按钮
     btn.classList.add('selected');
     this.selectedTarget = target;
